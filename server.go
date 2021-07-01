@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"log"
+	"math/rand"
 	"net/http"
+	"os"
 )
 
 func contains(slc []string, target string) bool {
@@ -61,6 +65,21 @@ func wavHandler(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	// Save file locally
+	var fileBuffer bytes.Buffer
+	io.Copy(&fileBuffer, file)
+	tmpFileName := fmt.Sprintf("%v.wav", rand.Intn(10000))
+	tmpFile, err := os.Create(tmpFileName)
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := tmpFile.Close(); err != nil {
+			panic(err)
+		}
+	}()
+	if _, err := tmpFile.Write(fileBuffer.Bytes()); err != nil {
+		panic(err)
+	}
 
 	// Run praat script
 
