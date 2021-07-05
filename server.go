@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/exec"
 )
 
 func contains(slc []string, target string) bool {
@@ -67,7 +68,8 @@ func wavHandler(writer http.ResponseWriter, request *http.Request) {
 	// Save file locally
 	var fileBuffer bytes.Buffer
 	io.Copy(&fileBuffer, file)
-	tmpFileName := fmt.Sprintf("%v.wav", rand.Intn(10000))
+	tmpFileNumber := fmt.Sprintf("%v", rand.Intn(10000))
+	tmpFileName := fmt.Sprintf("%v.wav", tmpFileNumber)
 	tmpFile, err := os.Create(tmpFileName)
 	if err != nil {
 		panic(err)
@@ -82,11 +84,32 @@ func wavHandler(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	// Run praat script
+	// https://stackoverflow.com/questions/6182369/exec-a-shell-command-in-go/7786922#7786922
+	program := "praat"
+
+	arg0 := "--run"
+	arg1 := "getPitchTier.praat"
+	arg2 := tmpFileNumber
+	cmd := exec.Command(program, arg0, arg1, arg2)
+	stdout, err := cmd.Output()
+
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(stdout))
+
+	// Open praat output
+	outfileName := fmt.Sprintf("%v.csv", tmpFileNumber)
+	outfile, err := os.Open(outfileName)
+	if err != nil {
+		panic(err)
+	}
+	defer outfile.Close()
 
 	// Return .csv file
-
-	// Print success message
-	fmt.Fprintf(writer, "/extract_pitch/wav POST successful")
+	writer.Header().Set("Content-Disposition", "attachment; filename=tmp.csv")
+	writer.Header().Set("Content-Type", "text/csv")
+	io.Copy(writer, outfile)
 }
 
 func main() {
