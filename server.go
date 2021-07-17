@@ -108,6 +108,8 @@ func wavHandler(writer http.ResponseWriter, request *http.Request) {
 
 	// Return .csv file
 	writer.Header().Set("Content-Disposition", "attachment; filename=tmp.csv")
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	writer.Header().Set("Content-Type", "text/csv")
 	io.Copy(writer, outfile)
 }
